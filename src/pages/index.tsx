@@ -2,14 +2,33 @@ import Head from 'next/head'
 import Image from 'next/image'
 import { Inter } from 'next/font/google'
 import { useState } from 'react'
+import { Table, TableRowProps } from '@/components/table'
 
 const inter = Inter({ subsets: ['latin'] })
+const defaultData = [{
+  example: 'Example test case',
+  expectedResult: true,
+  returnedResult: null
+}]
 
 export default function Home() {
   const [promptValue, setPromptValue] = useState<string>('')
+  const [data, setData] = useState<TableRowProps[]>(defaultData)
 
   async function handleSubmit() {
-    console.log('nothing rn')
+    const resp = await fetch('https://e8e0-204-11-230-50.ngrok-free.app', {
+      method: "POST",
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        data: {
+          prompt: promptValue,
+          cases: data.map(props => ([props.example, props.expectedResult]))
+        }
+      })
+    })
+    console.log(await resp, await resp.json())
   }
   return (
     <>
@@ -24,7 +43,7 @@ export default function Home() {
             <textarea className='my-10 w-[900px] min-h-[70vh] focus:border-none focus:ring-0 bg-gray-200 focus:outline-none outline-0' contentEditable={true} placeholder='Your prompt here' value={promptValue} onChange={(e) => setPromptValue(e.target.value)}/>
             <button onClick={handleSubmit} className='mt-1 bg-green-400 p-3 rounded-2xl'>Submit</button>
       </div>
-      <table></table>
+      <Table data={data} setData={setData} />
     </>
   )
 }
