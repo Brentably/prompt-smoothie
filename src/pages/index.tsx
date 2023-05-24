@@ -1,35 +1,80 @@
 import Head from 'next/head'
 import Image from 'next/image'
 import { Inter } from 'next/font/google'
-import { useState } from 'react'
-import { Table, TableRowProps } from '@/components/table'
+import { useEffect, useState } from 'react'
+import { TableRowProps } from '@/components/table'
+import 'react-data-grid/lib/styles.css';
+import DataGrid, { SelectColumn, textEditor, SelectCellFormatter } from 'react-data-grid';
+import toast, { Toaster } from 'react-hot-toast'
+import { JesterResp } from './api/jester'
 
 const inter = Inter({ subsets: ['latin'] })
-const defaultData = [{
-  example: 'Example test case',
-  expectedResult: true,
-  returnedResult: null
-}]
+// const defaultData = [{
+//   example: 'Example test case',
+//   expectedResult: true,
+//   returnedResult: null
+// }]
+
+const defaultData = ([
+  ["Hey everyone, can anyone recommend a good book on Python programming?", false],
+  ["I totally agree with you, your viewpoint is quite insightful.", false],
+  ["That's the stupidest thing I've ever heard. Are you always this clueless?", true],
+  ["Your post was really helpful, thanks for sharing!", false],
+  ["I think your argument is fundamentally flawed and you don't seem to understand the topic.", true],
+  ["Your ignorance is astounding. Do you even know what you're talking about?", true],
+  ["I appreciate the advice, it's really helpful.", false],
+  ["That's a ridiculous argument. You must be an idiot.", true],
+  ["Thanks for the explanation, it clarified a lot of my doubts.", false],
+  ["I can't believe how dumb some people are on this forum.", true],
+  ["You clearly have no idea what you're talking about. How pathetic.", true]
+] as [string, boolean][]).map(tuple => ({input: String(tuple[0]), expectedResult: String(tuple[1]), result: ''}))
+
+
+const defaultPromptValue = "Determine whether the message is toxic. Return `true` if the message is toxic and `false` otherwise. Message: [[input]]"
+
+export type Payload = {
+  prompt: string,
+  cases: TableRowProps[]
+}
 
 export default function Home() {
-  const [promptValue, setPromptValue] = useState<string>('')
-  const [data, setData] = useState<TableRowProps[]>(defaultData)
-
+  const [promptValue, setPromptValue] = useState<string>(defaultPromptValue)
+  const [rows, setRows] = useState<TableRowProps[]>(defaultData)
+  const [loading, setLoading] = useState(false)
+  const [completionRate, setCompletionRate] = useState<number | null>(null)
   async function handleSubmit() {
-    const resp = await fetch('https://e8e0-204-11-230-50.ngrok-free.app', {
+    if(!promptValue.includes('[[input]]')) toast.error("Your prompt didn\'t include \"[[input]]\" which is used to inject the inputs from your test cases.")
+    setLoading(true)
+    const resp = await fetch('/api/jester', {
       method: "POST",
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        data: {
           prompt: promptValue,
-          cases: data.map(props => ([props.example, props.expectedResult]))
+          cases: rows
         }
-      })
+      )
     })
-    console.log(await resp, await resp.json())
+
+    const {cases, passRate}:JesterResp = await resp.json()
+
+    setRows(cases)
+
+
   }
+
+  // useEffect(() => console.log(data), [data])
+
+
+
+  const columns = [
+    { key: 'input', name: 'Input', editor: textEditor },
+    { key: 'expectedResult', name: 'Expected Result', editor: textEditor },
+    { key: 'result', name: 'Result' }
+  ];
+  
+
   return (
     <>
       <Head>
@@ -38,12 +83,15 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
+      <div><Toaster/></div>
       <div className='flex flex-col min-h-screen justify-items-center items-center'>
 
+            {/* <textarea className='my-10 w-[900px] min-h-[70vh] focus:border-none focus:ring-0 bg-gray-200 focus:outline-none outline-0' contentEditable={true} placeholder='System Prompt' value={systemPrompt} onChange={(e) => setSystemPrompt(e.target.value)}/> */}
             <textarea className='my-10 w-[900px] min-h-[70vh] focus:border-none focus:ring-0 bg-gray-200 focus:outline-none outline-0' contentEditable={true} placeholder='Your prompt here' value={promptValue} onChange={(e) => setPromptValue(e.target.value)}/>
-            <button onClick={handleSubmit} className='mt-1 bg-green-400 p-3 rounded-2xl'>Submit</button>
+            <button onClick={handleSubmit} disabled={loading} className='mt-1 bg-green-600 p-3 rounded-2xl'>{loading? 'Loading...' : 'Submit'}</button>
+            <div className='text-white mt-10'>{completionRate ? `Pass Rate: ${completionRate}` : null}</div>
       </div>
-      <Table data={data} setData={setData} />
+      <DataGrid rows={rows} columns={columns} />
     </>
   )
 }
