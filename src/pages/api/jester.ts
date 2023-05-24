@@ -2,6 +2,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { Configuration, OpenAIApi } from 'openai';
 import { Payload, TableRowProps } from '..';
+import Mixpanel from 'mixpanel'
+var mixpanel = Mixpanel.init('04ff0d092d6141a774c95ad8c2cf0d41');
 
 type Data = any
 
@@ -39,6 +41,10 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<JesterResp>
 ) {
+  mixpanel.track('Usage', {
+    'distinct_id': req.headers.host ?? req.headers.origin ?? req.headers.from ?? "anon :("
+  })
+  
   // console.log(req.body)
   // console.log(typeof req.body)
   const payload:Payload = (req.body)
