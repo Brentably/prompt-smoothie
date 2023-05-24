@@ -1,8 +1,7 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { Configuration, OpenAIApi } from 'openai';
-import { Payload } from '..';
-import { TableRowProps } from '@/components/table';
+import { Payload, TableRowProps } from '..';
 
 type Data = any
 
@@ -56,6 +55,7 @@ export default async function handler(
 
 
   await Promise.all(results.map(x => x.result))
+  console.log('awaited')
 
 
   let newCases:TableRowProps[] = []

@@ -5,3 +5,7 @@
 body {
   background-color: rgb(28, 28, 68);
 }
+
+.backgroundRed {
+  background-color: red;
+}
