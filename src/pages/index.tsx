@@ -1,6 +1,6 @@
 import Head from 'next/head'
 import Image from 'next/image'
-import { Inter } from 'next/font/google'
+import { Inter, Pacifico } from 'next/font/google'
 import { useEffect, useState } from 'react'
 import 'react-data-grid/lib/styles.css';
 import DataGrid, { SelectColumn, textEditor, SelectCellFormatter, RowsChangeData } from 'react-data-grid';
@@ -26,6 +26,7 @@ export type TableRowProps = {
 
 
 const inter = Inter({ subsets: ['latin'] })
+const pacifico = Pacifico({weight: "400", subsets: ['latin']})
 // const defaultData = [{
 //   example: 'Example test case',
 //   expectedResult: true,
@@ -164,7 +165,7 @@ export default function Home() {
       </Head>
       <div><Toaster/></div>
       <div className='flex flex-col min-h-screen justify-items-center items-center '>
-
+        <h1 className={`text-6xl text-pink-600 mt-10 ${pacifico.className}`}>Smoothie</h1>
             {/* <textarea className='my-10 w-[900px] min-h-[70vh] focus:border-none focus:ring-0 bg-gray-200 focus:outline-none outline-0' contentEditable={true} placeholder='System Prompt' value={systemPrompt} onChange={(e) => setSystemPrompt(e.target.value)}/> */}
             <textarea className='my-10 w-[900px] min-h-[70vh] focus:border-none focus:ring-0 bg-gray-200 focus:outline-none outline-0'  placeholder='Your prompt here' value={promptValue} onChange={(e) => setPromptValue(e.target.value)}/>
             <button onClick={handleSubmit} disabled={loading} className='mt-1 bg-green-600 p-3 rounded-2xl'>{loading? 'Loading...' : 'Submit'}</button>
