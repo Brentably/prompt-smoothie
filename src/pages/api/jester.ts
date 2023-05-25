@@ -20,7 +20,7 @@ function getOpenAi() {
   return OpenAi
 }
 
-export async function getChatCompletionStandalone( message: string, model = "gpt-3.5-turbo", temperature = 0, example_tokens: number) {
+export async function getChatCompletionStandalone( message: string, expected: string, model = "gpt-3.5-turbo", temperature = 0, example_tokens: number) {
   console.log('calling')
   const openai = cachedOpenAi ? cachedOpenAi : getOpenAi()
   const completion = await openai.createChatCompletion({
@@ -31,8 +31,31 @@ export async function getChatCompletionStandalone( message: string, model = "gpt
   });
 
   if (!completion.data.choices[0].message) throw new Error("something fucked up")
+  const result = completion.data.choices[0].message.content
 
-  return completion.data.choices[0].message.content
+  const completion2 = await openai.createChatCompletion({
+    model: model,
+    messages: [
+      {
+        role: "user",
+        content: `Based on what was expected, and the result, determine whether the result was expected or not. Return \`expected\` if it was expected, and \`not expected\` if it wasn't.
+        Expected: ${expected}
+        Result: ${result}`
+      }
+    ],
+    temperature: 0,
+    max_tokens: 10
+  });
+
+
+  if (!completion2.data.choices[0].message) throw new Error("something fucked up")
+
+  const expectedOrNot = completion2.data.choices[0].message.content
+
+  if(expectedOrNot.toLowerCase() !== "expected" && expectedOrNot.toLowerCase() !== 'not expected') throw new Error()
+
+
+  return {result, didPass: (expectedOrNot === "expected")}
 }
 
 
@@ -51,12 +74,13 @@ export default async function handler(
   const {prompt, cases} = payload
   if(!prompt.includes('{{input}}')) throw new Error()
 
-  let results:{input: string, result: Promise<string> | string}[] = []
+  let results:{input: string, result: Promise<{result: string, didPass: boolean}>}[] = []
 
   for(let example of cases) {
     const builtPrompt = prompt.replace('{{input}}', example.input)
-    const p = getChatCompletionStandalone(builtPrompt, "gpt-4", 0, example.expectedResult.split(' ').length * 4)
-    results.push({input: example.input, result:p})
+    const result = getChatCompletionStandalone(builtPrompt, example.expected, "gpt-4", 0, example.expected.split(' ').length * 4)
+
+    results.push({input: example.input, result})
   }
 
 
@@ -70,14 +94,15 @@ export default async function handler(
   for(let i = 0; i < cases.length; i++) {
     let example = cases[i]
     if(results[i].input !== cases[i].input) throw new Error()
-    if(typeof await results[i].result !== 'string') {
+    const result = await results[i].result
+    if(typeof result.result !== 'string') {
       console.log(results)
       console.log(results[i].result)
       throw new Error() 
     }
 
-    example.result = await results[i].result
-    const didPass = (await results[i].result === cases[i].expectedResult)
+    example.result = result.result
+    const didPass = (result.didPass)
     example.passFail = didPass
     if(didPass) numPass++
     newCases.push(example)

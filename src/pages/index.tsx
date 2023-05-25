@@ -19,7 +19,7 @@ function scrollToBottom() {
 
 export type TableRowProps = {
   input: string,
-  expectedResult: string,
+  expected: string,
   result: string,
   passFail?: boolean
 }
@@ -29,27 +29,27 @@ const inter = Inter({ subsets: ['latin'] })
 const pacifico = Pacifico({ weight: "400", subsets: ['latin'] })
 // const defaultData = [{
 //   example: 'Example test case',
-//   expectedResult: true,
+//   expected: true,
 //   returnedResult: null
 // }]
 
 const defaultData = ([
-  ["Hey everyone, can anyone recommend a good book on Python programming?", false],
-  ["I totally agree with you, your viewpoint is quite insightful.", false],
-  ["That's the stupidest thing I've ever heard. Are you always this clueless?", true],
-  ["Your post was really helpful, thanks for sharing!", false],
-  ["I think your argument is fundamentally flawed and you don't seem to understand the topic.", true],
-  ["Your ignorance is astounding. Do you even know what you're talking about?", true],
-  ["I appreciate the advice, it's really helpful.", false],
-  ["That's a ridiculous argument. You must be an idiot.", true],
-  ["Thanks for the explanation, it clarified a lot of my doubts.", false],
-  ["I can't believe how dumb some people are on this forum.", true],
-  ["You clearly have no idea what you're talking about. How pathetic.", true],
+  ["Hey everyone, can anyone recommend a good book on Python programming?", "should be false"],
+  ["I totally agree with you, your viewpoint is quite insightful.", "should be false"],
+  ["That's the stupidest thing I've ever heard. Are you always this clueless?", "should be true"],
+  ["Your post was really helpful, thanks for sharing!", "should be false"],
+  ["I think your argument is fundamentally flawed and you don't seem to understand the topic.", "should be true"],
+  ["Your ignorance is astounding. Do you even know what you're talking about?", "should be true"],
+  ["I appreciate the advice, it's really helpful.", "should be false"],
+  ["That's a ridiculous argument. You must be an idiot.", "should be true"],
+  ["Thanks for the explanation, it clarified a lot of my doubts.", "should be false"],
+  ["I can't believe how dumb some people are on this forum.", "should be true"],
+  ["You clearly have no idea what you're talking about. How pathetic.", "should be true"],
   ['', '']
-] as [string, boolean][]).map(tuple => ({ input: String(tuple[0]), expectedResult: String(tuple[1]), result: '' }))
+] as [string, string][]).map(tuple => ({ input: String(tuple[0]), expected: String(tuple[1]), result: '' }))
 
 function isRowEmpty(row: TableRowProps) {
-  return row.expectedResult == '' && row.input == ''
+  return row.expected == '' && row.input == ''
 }
 
 const defaultPromptValue = "Determine whether the message is toxic. Return `true` if the message is toxic and `false` otherwise. Message: {{input}}"
@@ -95,7 +95,7 @@ export default function Home() {
     console.log(cases, passRate)
 
     setCompletionRate(passRate)
-    setRows([...cases, { input: '', expectedResult: '', result: '' }])
+    setRows([...cases, { input: '', expected: '', result: '' }])
     setLoading(false)
   }
 
@@ -125,7 +125,7 @@ export default function Home() {
       if (!isRowEmpty(pRows[pRows.length - 1])) {
         console.log('adding empty row')
 
-        return [...pRows, { input: '', expectedResult: '', result: '' }]
+        return [...pRows, { input: '', expected: '', result: '' }]
       }
       if (pRows.length > 1 && isRowEmpty(pRows[pRows.length - 1]) && isRowEmpty(pRows[pRows.length - 2])) {
         console.log('popping row')
@@ -141,7 +141,7 @@ export default function Home() {
 
 
   function handleClearAllRows() {
-    setRows([{ input: '', expectedResult: '', result: '' }])
+    setRows([{ input: '', expected: '', result: '' }])
   }
 
 
@@ -150,7 +150,7 @@ export default function Home() {
 
   const columns = [
     { key: 'input', name: 'Input', editor: textEditor },
-    { key: 'expectedResult', name: 'Expected Result', editor: textEditor },
+    { key: 'expected', name: 'What did you expect?', editor: textEditor },
     {
       key: 'result', name: 'Result', cellClass(row: TableRowProps) {
         if (row.passFail == undefined) return
