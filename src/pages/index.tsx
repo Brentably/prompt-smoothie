@@ -92,7 +92,8 @@ export default function Home() {
 
     const {cases, passRate}:JesterResp = await resp.json()
 
-
+    console.log(cases, passRate)
+    
     setCompletionRate(passRate)
     setRows([...cases, {input: '', expectedResult: '', result: ''}])
     setLoading(false)
