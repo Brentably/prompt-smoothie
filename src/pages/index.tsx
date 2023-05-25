@@ -84,15 +84,17 @@ export default function Home() {
       },
       body: JSON.stringify({
           prompt: promptValue,
-          cases: rows
+          cases: rows.slice(0, -1)
         }
       )
     })
 
+
     const {cases, passRate}:JesterResp = await resp.json()
 
+
     setCompletionRate(passRate)
-    setRows(cases)
+    setRows([...cases, {input: '', expectedResult: '', result: ''}])
     setLoading(false)
   }
 
