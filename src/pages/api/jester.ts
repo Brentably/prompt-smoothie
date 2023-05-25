@@ -53,7 +53,7 @@ export default async function handler(
 
   let results:{input: string, result: Promise<string> | string}[] = []
 
-  for(let example of cases.slice(0, -1)) {
+  for(let example of cases) {
     const builtPrompt = prompt.replace('[[input]]', example.input)
     const p = getChatCompletionStandalone(builtPrompt, "gpt-4", 0, example.expectedResult.split(' ').length * 4)
     results.push({input: example.input, result:p})
