@@ -172,7 +172,7 @@ export default function Home() {
       <div className='flex flex-col justify-items-center items-center '>
         <h1 className={`text-6xl text-pink-600 mt-10 ${pacifico.className}`}>Smoothie</h1>
         {/* <textarea className='my-10 w-[900px] min-h-[70vh] focus:border-none focus:ring-0 bg-gray-200 focus:outline-none outline-0' contentEditable={true} placeholder='System Prompt' value={systemPrompt} onChange={(e) => setSystemPrompt(e.target.value)}/> */}
-        <textarea className='my-10 w-[900px] focus:border-none focus:ring-0 bg-gray-200 focus:outline-none outline-0' placeholder='Your prompt here' value={promptValue} onChange={(e) => setPromptValue(e.target.value)} />
+        <textarea className='my-10 w-[900px] focus:border-none focus:ring-0 bg-gray-200 focus:outline-none outline-0 text-2xl' placeholder='Your prompt here' value={promptValue} onChange={(e) => setPromptValue(e.target.value)} />
         <button onClick={handleSubmit} disabled={loading} className='mt-1 bg-green-600 p-3 rounded-2xl'>{loading ? 'Loading...' : 'Submit'}</button>
         <div className='text-white mt-10'>{completionRate ? `Pass Rate: ${completionRate}` : null}</div>
       </div>
