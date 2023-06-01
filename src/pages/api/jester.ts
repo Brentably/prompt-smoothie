@@ -76,8 +76,15 @@ export default async function handler(
 
   let results:{input: string, result: Promise<{result: string, didPass: boolean}>}[] = []
 
+
   for(let example of cases) {
-    const builtPrompt = prompt.replace('{{input}}', example.input)
+    let builtPrompt = prompt
+    Object.keys(example).filter((key) => key !== "result" && key !== "expected").map((exKey) => {
+      const promptKey = `{{${exKey}}}`
+      if(!prompt.includes(promptKey)) throw new Error()
+      builtPrompt = builtPrompt.replace(promptKey, example[exKey])
+      
+    })
     const result = getChatCompletionStandalone(builtPrompt, example.expected, "gpt-4", 0, example.expected.split(' ').length * 4)
 
     results.push({input: example.input, result})

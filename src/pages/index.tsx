@@ -6,6 +6,7 @@ import 'react-data-grid/lib/styles.css';
 import DataGrid, { SelectColumn, textEditor, SelectCellFormatter, RowsChangeData } from 'react-data-grid';
 import toast, { Toaster } from 'react-hot-toast'
 import { JesterResp } from './api/jester'
+import ColumnModal from '@/components/columnModal';
 
 function scrollToBottom() {
   if (typeof window !== 'undefined') {
@@ -21,8 +22,9 @@ export type TableRowProps = {
   input: string,
   expected: string,
   result: string,
-  passFail?: boolean
+  passFail?: boolean,
 }
+
 
 
 const inter = Inter({ subsets: ['latin'] })
@@ -48,6 +50,17 @@ const defaultData = ([
   ['', '']
 ] as [string, string][]).map(tuple => ({ input: String(tuple[0]), expected: String(tuple[1]), result: '' }))
 
+const defaultColumns = [
+  { key: 'input', name: 'Input', editor: textEditor },
+  { key: 'expected', name: 'What did you expect?', editor: textEditor },
+  {
+    key: 'result', name: 'Result', cellClass(row: TableRowProps) {
+      if (row.passFail == undefined) return
+      return row.passFail ? 'bg-green-400' : 'bg-red-400'
+    }
+  }
+];
+
 function isRowEmpty(row: TableRowProps) {
   return row.expected == '' && row.input == ''
 }
@@ -65,38 +78,58 @@ function getInitialRows() {
   return rows ? JSON.parse(rows) : defaultData
 }
 
+function getInitialColumns() {
+  const columns = (typeof window !== 'undefined') ? window.localStorage.getItem('jestercols') : null
+  return columns ? JSON.parse(columns) : defaultColumns
+}
+
 export default function Home() {
   const [promptValue, setPromptValue] = useState<string>(defaultPromptValue)
   const [rows, setRows] = useState<TableRowProps[]>(defaultData)
+  const [columns, setColumns] = useState<any[]>(defaultColumns)
   const [rowsSet, setRowsSet] = useState(false)
+  const [columnsSet, setColumnsSet] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [showModal, setShowModal] = useState(false)
   const [completionRate, setCompletionRate] = useState<number | null>(null)
 
 
 
   async function handleSubmit() {
-    if (!promptValue.includes('{{input}}')) toast.error("Your prompt didn\'t include \"{{input}}\" which is used to inject the inputs from your test cases.")
-    setLoading(true)
-    const resp = await fetch('/api/jester', {
-      method: "POST",
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        prompt: promptValue,
-        cases: rows.slice(0, -1)
+    console.log(rows.slice(0, -1))
+    let isValid = true;
+    columns.slice(0, -2).forEach(column => {
+      if(!promptValue.includes(`{{${column.key}}}`) || !promptValue.includes(`{{${column.key}}}`)){
+        toast.error(`Your prompt didn\'t include \"{{${column.key}}}\" or \"{{${column.key}}}\" which is used to inject the inputs from your test cases.`)
+        isValid = false;
+        return;
       }
-      )
     })
+    if(isValid) {
+      setLoading(true)
+      const resp = await fetch('/api/jester', {
+        method: "POST",
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt: promptValue,
+          cases: rows.slice(0, -1)
+        }
+        )
+      })
 
 
-    const { cases, passRate }: JesterResp = await resp.json()
+      const { cases, passRate }: JesterResp = await resp.json()
 
-    console.log(cases, passRate)
+      console.log(cases, passRate)
 
-    setCompletionRate(passRate)
-    setRows([...cases, { input: '', expected: '', result: '' }])
-    setLoading(false)
+      setCompletionRate(passRate)
+        
+      setRows([...cases, {...Object.fromEntries(columns.slice(0, -2).map(col => [col.key, ''])), expected: '', result: '' }])
+
+      setLoading(false)
+    }
   }
 
   useEffect(() => {
@@ -104,11 +137,14 @@ export default function Home() {
       setRows(getInitialRows())
       setRowsSet(true)
     }
+    if(!columnsSet) {
+      setColumns(getInitialColumns())
+      setColumnsSet(true)
+    }
   }, [])
 
 
   useEffect(() => {
-    console.log('rowsaffect')
 
     if (typeof window !== 'undefined' && rowsSet) {
       window.localStorage.setItem('jesterrows', JSON.stringify(rows))
@@ -117,6 +153,13 @@ export default function Home() {
 
 
   }, [rows, rowsSet])
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && columnsSet) {
+      window.localStorage.setItem('jestercols', JSON.stringify(columns))
+      console.log('localstoragesaved')
+    }
+  })
 
   useEffect(() => {
     console.log('rowsaffect')
@@ -144,20 +187,11 @@ export default function Home() {
     setRows([{ input: '', expected: '', result: '' }])
   }
 
+  function addColumn(columnName: string) {
+    setColumns([...columns.slice(0, -2), { key: columnName.toLowerCase(), name: columnName, editor: textEditor }, ...columns.slice(-2)])
+    setRows((prevRows) => prevRows.map(row => ({ ...row, [columnName]: ''})))
+  }
 
-
-
-
-  const columns = [
-    { key: 'input', name: 'Input', editor: textEditor },
-    { key: 'expected', name: 'What did you expect?', editor: textEditor },
-    {
-      key: 'result', name: 'Result', cellClass(row: TableRowProps) {
-        if (row.passFail == undefined) return
-        return row.passFail ? 'bg-green-400' : 'bg-red-400'
-      }
-    }
-  ];
 
 
   return (
@@ -176,10 +210,17 @@ export default function Home() {
         <button onClick={handleSubmit} disabled={loading} className='mt-1 bg-green-600 p-3 rounded-2xl'>{loading ? 'Loading...' : 'Submit'}</button>
         <div className='text-white mt-10'>{completionRate ? `Pass Rate: ${completionRate}` : null}</div>
       </div>
-      <div className='flex flex-col m-4 mb-40'>
-        <button className='bg-red-500 self-end p-2' onClick={handleClearAllRows}>Clear all Rows</button>
-        <DataGrid rows={rows} columns={columns} onRowsChange={setRows} className='h-full ' />
+      <div className='flex flex-col m-4 mb-40 gap-4'>
+        <div className='flex-row'>
+        <button className='bg-red-500 self-end p-2 mr-2' onClick={handleClearAllRows}>Clear all Rows</button>
+        <button className='bg-orange-500 self-end p-2 mr-2' onClick={(e) => setShowModal(true)}>Add Column</button>
+        <button className='bg-amber-200 self-end p-2 mr-2' onClick={(e) => setColumns(defaultColumns)}>Reset Columns</button>
+        <button className='bg-slate-200 self-end p-2 mr-2' onClick={(e) => {setColumns(defaultColumns);setRows(defaultData)}}>Reset Rows</button>
+
+        </div>
+        {rowsSet && columnsSet ? <DataGrid rows={rows} columns={columns} onRowsChange={setRows} className='h-full ' /> : null}
       </div>
+      {showModal ? <ColumnModal setShowModal={setShowModal} addColumn={addColumn}/> : null}
     </>
   )
 }
