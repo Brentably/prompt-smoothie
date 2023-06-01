@@ -108,7 +108,6 @@ export default function Home() {
 
 
   useEffect(() => {
-    console.log('rowsaffect')
 
     if (typeof window !== 'undefined' && rowsSet) {
       window.localStorage.setItem('jesterrows', JSON.stringify(rows))
@@ -177,8 +176,10 @@ export default function Home() {
         <div className='text-white mt-10'>{completionRate ? `Pass Rate: ${completionRate}` : null}</div>
       </div>
       <div className='flex flex-col m-4 mb-40'>
+        <div className='flex-row'>
         <button className='bg-red-500 self-end p-2' onClick={handleClearAllRows}>Clear all Rows</button>
-        <DataGrid rows={rows} columns={columns} onRowsChange={setRows} className='h-full ' />
+        </div>
+        {rowsSet ? <DataGrid rows={rows} columns={columns} onRowsChange={setRows} className='h-full ' /> : null}
       </div>
     </>
   )
