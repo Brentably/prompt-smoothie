@@ -87,7 +87,7 @@ export default async function handler(
       builtPrompt = builtPrompt.replace(promptKey, example[exKey])
       
     })
-    const result = getChatCompletionStandalone(builtPrompt, example.expected, "gpt-3.5-turbo", 0, example.expected.split(' ').length * 4)
+    const result = getChatCompletionStandalone(builtPrompt, example.expected, "gpt-4", 0, example.expected.split(' ').length * 4)
 
     results.push({input: example.input, result})
   }
