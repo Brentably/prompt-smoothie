@@ -38,7 +38,7 @@ export async function getChatCompletionStandalone( message: string, expected: st
     messages: [
       {
         role: "user",
-        content: `Based on what was expected, and the result, determine whether the result was expected or not. Return \`expected\` if it was expected, and \`not expected\` if it wasn't.
+        content: `Based on what was expected, and the result, determine whether the result was expected or not. Return \`expected\` if it was expected, and \`not expected\` if it wasn't with no punctuation.
         Expected: ${expected}
         Result: ${result}`
       }
@@ -51,6 +51,8 @@ export async function getChatCompletionStandalone( message: string, expected: st
   if (!completion2.data.choices[0].message) throw new Error("something fucked up")
 
   const expectedOrNot = completion2.data.choices[0].message.content
+
+  console.log(expectedOrNot)
 
   if(expectedOrNot.toLowerCase() !== "expected" && expectedOrNot.toLowerCase() !== 'not expected') throw new Error()
 
@@ -80,12 +82,12 @@ export default async function handler(
   for(let example of cases) {
     let builtPrompt = prompt
     Object.keys(example).filter((key) => key !== "result" && key !== "expected").map((exKey) => {
-      const promptKey = `{{${exKey}}}`
+      const promptKey = `{{${exKey.toLowerCase()}}`
       if(!prompt.includes(promptKey)) throw new Error()
       builtPrompt = builtPrompt.replace(promptKey, example[exKey])
       
     })
-    const result = getChatCompletionStandalone(builtPrompt, example.expected, "gpt-4", 0, example.expected.split(' ').length * 4)
+    const result = getChatCompletionStandalone(builtPrompt, example.expected, "gpt-3.5-turbo", 0, example.expected.split(' ').length * 4)
 
     results.push({input: example.input, result})
   }
