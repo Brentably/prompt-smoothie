@@ -81,7 +81,7 @@ export default async function handler(
 
   for(let example of cases) {
     let builtPrompt = prompt
-    Object.keys(example).filter((key) => key !== "result" && key !== "expected").map((exKey) => {
+    Object.keys(example).filter((key) => key !== "result" && key !== "expected" && key !== "passFail").map((exKey) => {
       const promptKey = `{{${exKey.toLowerCase()}}`
       if(!prompt.includes(promptKey)) throw new Error()
       builtPrompt = builtPrompt.replace(promptKey, example[exKey])

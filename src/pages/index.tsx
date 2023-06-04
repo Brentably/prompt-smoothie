@@ -100,8 +100,8 @@ export default function Home() {
     console.log(rows.slice(0, -1))
     let isValid = true;
     columns.slice(0, -2).forEach(column => {
-      if(!promptValue.includes(`{{${column.key}}}`) || !promptValue.includes(`{{${column.key}}}`)){
-        toast.error(`Your prompt didn\'t include \"{{${column.key}}}\" or \"{{${column.key}}}\" which is used to inject the inputs from your test cases.`)
+      if(!promptValue.includes(`{{${column.key}}}`)){
+        toast.error(`Your prompt didn\'t include \"{{${column.key}}}\" which is used to inject the inputs from your test cases.`)
         isValid = false;
         return;
       }
