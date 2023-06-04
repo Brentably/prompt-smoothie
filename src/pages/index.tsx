@@ -23,6 +23,7 @@ export type TableRowProps = {
   expected: string,
   result: string,
   passFail?: boolean,
+  [x: string]: any,
 }
 
 
