@@ -1,6 +1,6 @@
 import Head from 'next/head'
 import Image from 'next/image'
-import { Inter, Pacifico } from 'next/font/google'
+import { Inter, Pacifico, Prompt } from 'next/font/google'
 import { useEffect, useState } from 'react'
 import 'react-data-grid/lib/styles.css';
 import DataGrid, { SelectColumn, textEditor, SelectCellFormatter, RowsChangeData } from 'react-data-grid';
@@ -65,10 +65,17 @@ function getInitialRows() {
   return rows ? JSON.parse(rows) : defaultData
 }
 
+function getInitialPromptValue() {
+
+  const rows = (typeof window !== 'undefined') ? window.localStorage.getItem('prompt') : null
+  return rows ? JSON.parse(rows) : defaultPromptValue
+}
+
 export default function Home() {
   const [promptValue, setPromptValue] = useState<string>(defaultPromptValue)
   const [rows, setRows] = useState<TableRowProps[]>(defaultData)
   const [rowsSet, setRowsSet] = useState(false)
+  const [promptValueSet, setPromptValueSet] = useState(false)
   const [loading, setLoading] = useState(false)
   const [completionRate, setCompletionRate] = useState<number | null>(null)
 
@@ -104,8 +111,19 @@ export default function Home() {
       setRows(getInitialRows())
       setRowsSet(true)
     }
+    if (!promptValueSet) {
+      setPromptValue(getInitialPromptValue())
+      setPromptValueSet(true)
+    }
   }, [])
 
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && promptValueSet) {
+      window.localStorage.setItem('prompt', JSON.stringify(promptValue))
+      console.log('localstoragesaved')
+    }
+  }, [promptValue, promptValueSet])
 
   useEffect(() => {
     console.log('rowsaffect')
